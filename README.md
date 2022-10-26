@@ -37,17 +37,18 @@ Requisitar a URL http://localhost:[PORT]/city/[UF]/[CIDADE]
 
 Exemplo:
 
-http://localhost:3000/city/rs/lajeado
+http://localhost:3000/city/rs/doutor-ricardo
 
 ```
 {
 
-    "city": "lajeado",
+    "code": "4306759",
+    "city": "Doutor Ricardo",
     "province": "rs",
-    "mayor": "MARCELO CAUMO",
-    "gentle": "lajeadense",
-    "idhm": "0,778",
-    "population": "86.005"
+    "mayor": "ALVARO JOSE GIACOBBO",
+    "gentle": "ricardense",
+    "idhm": "0,724",
+    "population": "1.967"
 
 }
 ```
