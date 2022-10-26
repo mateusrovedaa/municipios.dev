@@ -33,11 +33,11 @@ yarn serve
 
 ## Como usar
 
-Requisitar a URL http://localhost/city/[UF]/[CIDADE]
+Requisitar a URL http://localhost:[PORT]/city/[UF]/[CIDADE]
 
 Exemplo:
 
-http://localhost/city/rs/lajeado
+http://localhost:3000/city/rs/lajeado
 
 ```
 {
