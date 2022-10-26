@@ -19,12 +19,10 @@ class CityController {
 
     _getCityInfos = async (province: String, city: String) => {
         try {
+            
             const URL = `https://www.ibge.gov.br/cidades-e-estados/${province}/${city}.html`;
-
             const browser = await puppeteer.launch();
-
             const page = await browser.newPage();
-
             await page.goto(URL);
 
             if (page.url() !== URL) {
@@ -39,7 +37,6 @@ class CityController {
                 const mayorHandle = await this._handle(page, xpathMayor);
                 const gentleHandle = await this._handle(page, xpathGentle);
                 const IDHMHandle = await this._handle(page, xpathIDHM);
-
 
                 let population = await this._getData(page, populationHandle);
                 let mayor = await this._getData(page, mayorHandle);
@@ -65,7 +62,6 @@ class CityController {
                 console.log(cityObject);
                 return cityObject;
             }
-
         } catch (error) {
             throw new Error(`${error}`);
         }
