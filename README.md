@@ -10,14 +10,19 @@ Carregar o arquivo de profile para o terminal
 source environment/profile
 ```
 
-Realizar o build da aplicação
+Realizar o build da aplicação do serviço desejado (api-development ou api-distribution)
 ```
-build
+build [serviço]
 ```
 
-Iniciar o servidor da API e o banco de dados
+Iniciar o servidor da API e o banco de dados para desenvolvimento
 ```
-server
+development
+```
+
+ou com a imagem e banco de distribuição
+```
+distribution
 ```
 
 
@@ -37,35 +42,6 @@ Para encerrar a aplicação, usar o comando
 ```
 down
 ```
-## Executar sem containers
-
-1. Criar uma cópia do arquivo ```.env.example``` com o nome ```.env```
-```
-cp .env.example .env
-```
-
-2. Preencher as variáveis com os valores
-```
-PORT=
-
-DB_DATABASE=
-DB_USERNAME=
-DB_PASSWORD=
-DB_HOST=
-DB_PORT=
-DB_DIALECT=
-```
-
-3. Instalar os pacotes
-```
-npm install
-```
-
-4. Executar o projeto
-```
-npm run serve
-```
-
 
 ## Como usar
 

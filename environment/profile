@@ -3,8 +3,9 @@
 PROJECT=$(basename $(pwd))
 DOCKER_COMPOSE_PATH=environment/docker-compose.yml
 
-alias docker-compose="docker-compose -f ${DOCKER_COMPOSE_PATH} $@"
-alias server="docker-compose up -d postgres api"
-alias build="docker-compose build"
+alias docker-compose="COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose -f ${DOCKER_COMPOSE_PATH} $@"
+alias development="docker-compose up -d pg-development api-development"
+alias distribution="docker-compose up -d pg-distribution api-distribution"
+alias build="docker-compose build $@"
 alias down="docker-compose down"
 alias logs="docker-compose logs -f"

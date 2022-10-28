@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  postgres:
+  pg-development:
     image: postgres
     container_name: postgres-container
     environment:
@@ -9,25 +9,26 @@ services:
       POSTGRES_PASSWORD: postgres
       PGDATA: /data/postgres
     volumes:
-      - postgres:/data/postgres
+      - pg-development:/data/postgres
     ports:
       - "5432:5432"
     networks:
-      - postgres
+      - development
     restart: unless-stopped
 
-  api:
+  api-development:
     build:
       dockerfile: ./environment/docker/api/Dockerfile
       context: ..
-    container_name: api-container
+      target: development
+    container_name: api-development-container
     command: npm run serve
     environment:
       - PORT=3000
       - DB_DATABASE=postgres
       - DB_USERNAME=postgres
       - DB_PASSWORD=postgres
-      - DB_HOST=postgres
+      - DB_HOST=pg-development
       - DB_PORT=5432
       - DB_DIALECT=postgres
     ports:
@@ -36,14 +37,56 @@ services:
       - ../:/usr/src/app/
       - /usr/src/app/node_modules
     networks:
-      - postgres
+      - development
     depends_on:
-      - postgres
+      - pg-development
+    restart: unless-stopped
+
+  pg-distribution:
+    image: postgres
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /data/postgres
+    volumes:
+      - pg-distribution:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - distribution
+    restart: unless-stopped
+  api-distribution:
+    build:
+      dockerfile: ./environment/docker/api/Dockerfile
+      context: ..
+      args:
+        EXPOSE_PORT: 3000
+      target: distribution
+    image: api-municipios:latest
+    container_name: api-distribution-container
+    environment:
+      - PORT=3000
+      - DB_DATABASE=postgres
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=pg-distribution
+      - DB_PORT=5432
+      - DB_DIALECT=postgres
+    ports:
+      - "3000:3000"
+    networks:
+      - distribution
+    depends_on:
+      - pg-distribution
     restart: unless-stopped
 
 networks:
-  postgres:
+  development:
+    driver: bridge
+  distribution:
     driver: bridge
 
 volumes:
-  postgres:
+  pg-development:
+  pg-distribution:

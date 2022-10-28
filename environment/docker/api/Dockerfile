@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:slim as base
 
 WORKDIR /usr/src/app
 
@@ -12,5 +12,18 @@ RUN apt-get update && apt-get install gnupg wget -y && \
     apt-get install google-chrome-stable -y --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY package.json .
+# Development
+FROM base as development
+COPY package*.json .
 RUN yarn install
+
+# Distribution
+FROM base as distribution
+ARG EXPOSE_PORT=3000
+
+COPY package*.json .
+RUN yarn install --production=true
+COPY . .
+
+EXPOSE $EXPOSE_PORT
+CMD ["yarn", "serve"]
