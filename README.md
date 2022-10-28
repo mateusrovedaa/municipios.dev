@@ -1,6 +1,6 @@
 # Web Scraping IBGE
 
-API para retornar informações do portal https://www.ibge.gov.br/cidades-e-estados/.
+API para retornar informações do portal https://www.ibge.gov.br/cidades-e-estados/ e pesquisar o website de prefeituras.
 
 ## Executar com containers
 
