@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
-// import { City } from "../models/City";
+import { City } from "../models/City";
 import puppeteer, { Page } from 'puppeteer';
 
 class CityController {
 
     find = async (req: Request, res: Response) => {
         try {
-            const province = req.params.province as string;
-            const city = req.params.city as string;
+            const province = req.params.province.toUpperCase() as string;
+            const city = req.params.city.toLowerCase().trimEnd().split(' ').join('-') as string;
 
-            const cityData = await this._getCityInfos(province, city);
+            const cityData = await this._getCityInfo(province, city);
 
             res.json(cityData);
         } catch (error) {
@@ -17,12 +17,58 @@ class CityController {
         }
     }
 
-    _getCityInfos = async (province: String, city: String) => {
+    _getCityInfo = async (province: string, city: string) => {
+        const cityDataFromDatabase = await City.locateCity(city, province);
+        const maxDaysDataNotUpdated = 7;
+
+        if (cityDataFromDatabase) {
+            const older = new Date(cityDataFromDatabase.updatedAt).getTime();
+            const diffDays = await this._compareDaysDiffDates(older);
+
+            if (diffDays > maxDaysDataNotUpdated) {
+                return await this._searchAndSaveOrUpdate(province, city, city);
+            }
+
+            return cityDataFromDatabase;
+        } else {
+            return await this._searchAndSaveOrUpdate(province, city);
+        }
+    }
+
+    _searchAndSaveOrUpdate = async (province: string, city: string, slug?: string) => {
+        if (slug) {
+            const cityDataSource = await this._getCityInfoSource(province, city);
+            await City.update(cityDataSource, {
+                where: {
+                    slug: slug,
+                    province: province
+                }
+            });
+
+            return await City.locateCity(city, province);;
+        } else {
+            const cityDataSource = await this._getCityInfoSource(province, city);
+            const cityData = await City.create(cityDataSource);
+            return cityData;
+        }
+    }
+
+    _compareDaysDiffDates = async (date: number) => {
+        const now = new Date().getTime();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }
+
+    _getCityInfoSource = async (province: string, city: string) => {
         try {
-            
+
             const URL = `https://www.ibge.gov.br/cidades-e-estados/${province}/${city}.html`;
-            const browser = await puppeteer.launch();
+            const browser = await puppeteer.launch({
+                args: ['--no-sandbox', '--disabled-setupid-sandbox'],
+            });
             const page = await browser.newPage();
+            page.setDefaultNavigationTimeout(0);
             await page.goto(URL);
 
             if (page.url() !== URL) {
@@ -49,23 +95,27 @@ class CityController {
                 let cityName = await this._getData(page, cityHandle);
                 let code = await this._getData(page, codeHandle);
 
+                const siteUrl = await this._searchUrlGoogle(page, `${city} ${province} governo site`)
+
                 await browser.close();
 
-                population = population ? population.split(' ')[0] : null;
+                population = population ? population.split(' ')[0].replaceAll('.', '') : null;
                 mayor = mayor ? mayor.split('[')[0].trimEnd() : null;
                 gentle = gentle ? gentle.split(' ')[0] : null;
-                IDHM = IDHM ? IDHM.split('[')[0].trimEnd() : null;
+                IDHM = IDHM ? IDHM.split('[')[0].trimEnd().replaceAll(',', '.') : null;
                 cityName = cityName ? cityName : null;
                 code = code ? code.split(' ')[1] : null;
 
                 const cityObject = {
-                    code: code,
-                    city: cityName,
+                    slug: city,
+                    name: cityName,
                     province: province,
+                    ibgecode: code,
                     mayor: mayor,
                     gentle: gentle,
                     idhm: IDHM,
-                    population: population
+                    population: population,
+                    site: siteUrl
                 }
 
                 console.log(cityObject);
@@ -76,7 +126,24 @@ class CityController {
         }
     }
 
-    _handle = async (page: Page, xpath: String) => {
+    _searchUrlGoogle = async (page: Page, searchQuery: string) => {
+        await page.goto("https://www.google.com/?hl=en", { waitUntil: "domcontentloaded" });
+        await page.waitForSelector('input[aria-label="Search"]', { visible: true });
+        await page.type('input[aria-label="Search"]', `${searchQuery}`);
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+            page.keyboard.press("Enter"),
+        ]);
+        await page.waitForSelector(".LC20lb", { visible: true });
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: "domcontentloaded" }),
+            page.click(".LC20lb"),
+        ]);
+
+        return page.url();
+    }
+
+    _handle = async (page: Page, xpath: string) => {
         return await page.$x(`${xpath}`);
     }
 
